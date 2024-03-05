@@ -1,9 +1,9 @@
       
 import sys
 
-#debug = True
 
 debug=False
+#debug = True
 
 def add_use(lines):
     line_num=0
@@ -13,16 +13,16 @@ def add_use(lines):
     verbose=False
     for line in lines:
 #        print("line =", line)
-        if ("implicit none" in line or "IMPLICIT NONE" in line):
+        if (("implicit none" in line or "IMPLICIT NONE" in line) and "!" not in line):
             if verbose: print("line_num = ", line_num)
             if verbose: print("num_implicit = ", num_implicit)
-            new_lines=new_lines[:line_num+num_implicit+1]+["USE MODACC"]+new_lines[line_num+num_implicit+1:]
+            new_lines=new_lines[:line_num+num_implicit]+["USE LACC_MOD\n"]+new_lines[line_num+num_implicit:]
             num_implicit+=1
     
     
         line_num+=1
     #new_code=new_lines.join('\n')
-    new_code='\n'.join(new_lines)
+    new_code=''.join(new_lines)
     return(new_code) 
 
 if debug:
@@ -46,7 +46,7 @@ if debug:
     #"""
 
 
-    new_code=add_use(code)
+    new_code=add_use(code.split('\n'))
     print("code = ", code)
     print("************************************************")
     print("new_code = ", new_code)
