@@ -5,7 +5,7 @@ find $1 -type f -name "*.F90" -exec bash -c '
     input_file=$1
     temp_file=$(mktemp)  
     echo "==> $1 <=="
-    while IFS= read -r line; do
+    while IFS= read -r line || [[ -n $line ]]; do
         if [[ "$line" =~ \!\$acc ]]; then
             echo "${line^^}" >> "$temp_file"
         else
