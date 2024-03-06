@@ -2,15 +2,17 @@ import re
 import sys
 
 def replace(string):
-    to_replace=["#ifdef _OPENACC", "#else", "#endif"]
+    to_replace=["#ifdef", "_OPENACC", "#else", "#endif", "ifndef"]
     for line in to_replace:
         string=string.replace(line,"")
     return(string)
 
 def remove_blocs_ifdef(code):
+    #verbose=True
     verbose=False
     # Motif de recherche pour le bloc ifdef
-    pattern_ifdef = r'#ifdef\s+_OPENACC(.*?)#endif'
+    #pattern_ifdef = r'#ifdef\s+_OPENACC(.*?)#endif'
+    pattern_ifdef =  r'#ifdef\s+_OPENACC(.*?)#endif\s*(?:_OPENACC)?'
 
     code_new=code
     while True:
@@ -20,7 +22,7 @@ def remove_blocs_ifdef(code):
             # Vérifier si le code contient les mots "use" ou "procedure"
             bloc_ifdef = match_ifdef.group(0)
             if verbose: print("bloc_ifdef=", bloc_ifdef)
-            if re.search(r'\b(use|procedure)\b', bloc_ifdef, re.IGNORECASE):
+            if re.search(r'\b(use|procedure|subroutine)\b', bloc_ifdef, re.IGNORECASE):
             #if re.search(r'\b(use|procedure|subroutine)\b', bloc_ifdef, re.IGNORECASE):
                 if verbose: print("bloc_ifdef MATCH=", bloc_ifdef)
                 new_ifdef=replace(bloc_ifdef)

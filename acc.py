@@ -2,45 +2,25 @@ import re
 import sys
 
 
+def dernier_caractere_non_espace(chaine):
+    match = re.search(r' [ \n]*[^ \n]', chaine[::-1])
+    #match = re.search(r'[^ \n](?=[ \n]*$)', chaine[::-1])
+    if match:
+        return match.group()
+    else:
+        return None
 
-#def extract_code_between_directives(lines):
-#    in_region = False
-#    extracted_code = []
+
+
+#chaine = "aaab d &  \n"
+#print(chaine[::-1])
+#dernier = dernier_caractere_non_espace(chaine)
+#if dernier:
+#    print("Le dernier caractère non espace ou retour à la ligne est :", dernier)
+#else:
+#    print("Il n'y a pas de dernier caractère non espace ou retour à la ligne dans la chaîne.")
 #
-#    for line in lines:
-#        if "#ifdef _OPENAC" in line:
-#            in_region = True
-#        elif "#else" in line:
-#            in_region = False
-#        elif "#endif" in line:
-#            in_region = False
-#        elif in_region:
-#            extracted_code.append(line.strip())
-#
-#    return extracted_code
-
-def remove_ifdef_contains(input_file, output_file):
-#    pattern = r'^\s*contains\s*$'
-    verbose=False
-#    number_contains=0
-    with open(input_file, 'r') as f_in:
-        lines = f_in.readlines()
-#    for line in lines:
-#        #if "contains" in line:
-#        if re.match(pattern, line):
-#            number_contains+=1 
-#            if verbose: print(line)
-#        if number_contains    
-
-    for line in lines:
-        if "#ifdef _OPENACC" in line:
-            inside_openacc_block = True
-        if inside_openacc_block and "use" in line:
-            if verbose: print(line)
-        if inside_openacc_block and "procedure" in line:
-            if verbose: print(line)
-        
-    
+   
 def modify_acc_to_acc_if(input_file, output_file):
 #https://www.openacc.org/sites/default/files/inline-files/OpenACC_2_0_specification.pdf
     verbose=False
@@ -56,13 +36,13 @@ def modify_acc_to_acc_if(input_file, output_file):
 
     for line in lines:
         if "#ifdef _OPENACC" in line:
-            line="IF(LACC) THEN"
+            line="IF(LACC) THEN\n"
             inside_openacc_block = True
             modified_lines.append(line)
             continue
 
         if "#else" in line and inside_openacc_block:
-            line="ELSE"
+            line="ELSE\n"
             modified_lines.append(line)
             continue
 
@@ -72,8 +52,8 @@ def modify_acc_to_acc_if(input_file, output_file):
             print("if nested inside open acc ifdef")
             print("================================================")
 
-        if "#endif" in line:
-            line="END IF"
+        if "#endif" in line and inside_openacc_block:
+            line="END IF\n"
             inside_openacc_block = False
             modified_lines.append(line)
             continue
@@ -81,12 +61,25 @@ def modify_acc_to_acc_if(input_file, output_file):
         num_pragma=0
         if not inside_openacc_block:
             for pragma in pragmas:
-                if pragma in line:
-                    if verbose: print("line =", line)
-                    num_pragma=num_pragma+1
-                    if num_pragma>1:
-                        print("more than one pragma item on that line")
-                    line = line.replace(pragma, pragma+" IF(LACC)")
+                if ("!$OMP" not in line and "!$ACC" in line):
+#                if "!$OMP" not in line:
+                    if (pragma in line and not ("LACC" in line or "END" in line or "IF(" in line or "from PROF" in line)): #not LACC = not LACC and not LLACC
+                        if "LOOP" in line:
+                            line = line.replace("\n", " IF(LACC)\n")
+#                            line.replace(
+                        else:
+                            line = line.replace(pragma, pragma+" IF(LACC)")
+#                        if verbose: print("line =", line)
+#                        num_pragma=num_pragma+1
+#                        if num_pragma>1:
+#                            print("more than one pragma item on that line")
+#                        last_char = dernier_caractere_non_espace(line)
+#                        if last_char == "&":
+#                            line = line.replace("\n", "")
+#                            line = line.replace("&", " IF(LACC)\n")
+#                        else:
+#                            line = line.replace("\n", " IF(LACC)\n")
+#                    #    line = line + " IF(LACC)"
 
         modified_lines.append(line)
 
@@ -96,8 +89,8 @@ def modify_acc_to_acc_if(input_file, output_file):
 input_file=sys.argv[1]
 #output_file=sys.argv[2]
 output_file=input_file
-#modify_acc_to_acc_if(input_file, output_file)
-remove_ifdef_contains(input_file, output_file)
+modify_acc_to_acc_if(input_file, output_file)
+#remove_ifdef_contains(input_file, output_file)
 
 #with open("test.cpp", "r") as file:
 #    lines = file.readlines()
